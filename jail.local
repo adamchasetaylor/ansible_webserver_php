@@ -1,0 +1,13 @@
+[DEFAULT]
+bantime = 720m # How long to block an abusive IP
+findtime = 120m # Time period to check the connections
+maxretry = 3 # Within the above time period, block the abusive IP if the number of the abusive IP connections reaches the maxretry
+fail2ban_agent = Fail2Ban/%(fail2ban_version)s
+banaction = ufw
+banaction_allports = ufw
+ignoreip = 127.0.0.1/8 ::1 # Ignore these IP, Hosts, IP ranges during operation
+
+[sshd]
+enabled =  true
+logpath  = /var/log/auth.log
+maxretry = 3

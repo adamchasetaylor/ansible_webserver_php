@@ -1,0 +1,34 @@
+- name: Install apt packages for UFW and fail2ban
+  apt:
+    update_cache: yes
+    name:
+      - fail2ban
+      - ufw
+    state: present
+- name: "Reset UFW Rules"
+  ufw: 
+    state: reset
+- name: "Update UFW Rules"
+  ufw: 
+    rule: "{{item.rule}}"
+    port: "{{item.port}}"
+    proto: "{{item.proto}}"
+  with_items:
+    - { rule: 'limit', port: 'ssh', proto: 'tcp' }
+- name: Add Cloudflare IPs to UFW
+  command: '/bin/bash /root/ufw-cloudflare.sh'
+- name: "Update UFW Default Rules"
+  ufw: 
+    direction: "{{item.direction}}"
+    rule: "{{item.rule}}"
+  with_items:
+    - { direction: 'in', rule: 'deny' }
+    - { direction: 'out', rule: 'allow' }
+- name: Enable UFW
+  ufw:
+    state: enabled
+    logging: on
+- name: restart fail2ban
+  service:
+    name=fail2ban
+    state=restarted
