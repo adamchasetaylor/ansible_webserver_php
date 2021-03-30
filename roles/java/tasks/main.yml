@@ -1,0 +1,46 @@
+- name: Install apt packages for SDKMAN
+  apt:
+    update_cache: yes
+    name:
+      - unzip
+      - zip
+    state: present
+- name: Add lines on .bashrc
+  lineinfile:
+    dest=~/.bashrc
+    line={{ item }}
+  with_items:
+    - 'source ~/.sdkman/bin/sdkman-init.sh'
+    - 'export JAVA_HOME=~/.sdkman/candidates/java/current'
+    - 'export PATH=$JAVA_HOME/bin:$PATH'
+- name: SDKMAN | Check if is present
+  stat:
+    path: "~/.sdkman/bin/sdkman-init.sh"
+  register: sdkman_bin_path
+- name: SDKMAN | Download and Install
+  block:
+    - name: SDKMAN | Download the binary
+      get_url:
+        url: https://get.sdkman.io
+        dest: /tmp/sdkman.sh
+        mode: 0777
+        validate_certs: false
+      retries: 3
+    - name: SDKMAN | Execute the binary
+      shell: "/tmp/sdkman.sh"
+  when: sdkman_bin_path.stat.exists == false
+- name: SDKMAN | Check if Java 8 is present
+  stat:
+    path: "~/.sdkman/candidates/java/8.0.275.open-adpt/bin/java"
+  register: sdkman_java8_bin_path
+- name: SDKMAN | Install Java 8
+  shell: ". ~/.sdkman/bin/sdkman-init.sh && sdk install java 8.0.275.open-adpt"
+  args:
+    executable: /bin/bash
+  when: sdkman_java8_bin_path.stat.exists == false
+- name: SDKMAN | Install Maven
+  shell: ". ~/.sdkman/bin/sdkman-init.sh && sdk install maven"
+  args:
+    executable: /bin/bash
+  retries: 3
+  ignore_errors: true

@@ -7,6 +7,9 @@
     - name: setup PHP
       include_role:
         name: php
+    - name: setup Java
+      include_role:
+        name: java
     - name: Create Directories
       file:
         path: "{{item.path}}"
