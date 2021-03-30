@@ -1,11 +1,12 @@
 ---
   - name: Playbook
     hosts: atl
+    remote_user: root
     gather_facts: no
     tasks:
-    - name: setup Node/NPM/PM2
+    - name: setup PHP
       include_role:
-        name: node
+        name: php
     - name: Create Directories
       file:
         path: "{{item.path}}"
@@ -15,25 +16,19 @@
         group: "{{item.group}}"
       with_items:
         - { path: '/etc/nginx/certs', owner: 'root', group: 'root', state: 'directory'}
-        - { path: '/var/www/app', owner: 'root', group: 'root', state: 'directory' }
         - { path: '/var/www/assets', owner: 'www-data', group: 'www-data', state: 'directory' }
         - { path: '/var/www/html', owner: 'root', group: 'root', state: 'absent' }
+        - { path: '/etc/fail2ban/', owner: 'root', group: 'root', state: 'directory' }  
     - name: Setup NGINX and Test App
       template: src={{item.src}} dest={{item.dest}}
       with_items:
         - { src: 'certs/cert.pem', dest: '/etc/nginx/certs/cert.pem' }
         - { src: 'certs/cert.key', dest: '/etc/nginx/certs/cert.key' }
         - { src: 'nginx.conf', dest: '/etc/nginx/sites-available/default' } 
-        - { src: 'app.js', dest: '/var/www/app/app.js' }
-        - { src: 'index.html', dest: '/var/www/index.html' }
+        - { src: 'index.php', dest: '/var/www/index.php' }
         - { src: 'ufw-cloudflare.sh', dest: '/root/ufw-cloudflare.sh'}
         - { src: 'jail.local', dest: '/etc/fail2ban/jail.local'}
       notify: restart nginx
-    - name: delete existing pm2 processes if running
-      command: "pm2 delete node_app"
-      ignore_errors: True
-    - name: start pm2 process
-      command: 'pm2 start -x -i max --name "node_app" /var/www/app/app.js --watch'
     - name: setup UFW
       include_role:
         name: ufw
